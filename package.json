@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "forge test && hardhat test"
+    "test": "hardhat test"
   },
   "author": "Devan Non <devanon@chainstride.capital>",
   "license": "Apache-2.0",

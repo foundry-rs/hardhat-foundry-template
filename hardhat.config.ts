@@ -30,20 +30,20 @@ const config: HardhatUserConfig = {
     sources: "./src",
     cache: "./cache_hardhat",
   },
-  // preprocess: {
-  //   eachLine: (hre) => ({
-  //     transform: (line: string) => {
-  //       if (line.match(/^\s*import /i)) {
-  //         getRemappings().forEach(([find, replace]) => {
-  //           if (line.match('"' + find)) {
-  //             line = line.replace('"' + find, '"' + replace);
-  //           }
-  //         });
-  //       }
-  //       return line;
-  //     },
-  //   }),
-  // },
+  preprocess: {
+    eachLine: (hre) => ({
+      transform: (line: string) => {
+        if (line.match(/^\s*import /i)) {
+          getRemappings().forEach(([find, replace]) => {
+            if (line.match('"' + find)) {
+              line = line.replace('"' + find, '"' + replace);
+            }
+          });
+        }
+        return line;
+      },
+    }),
+  },
 };
 
 export default config;
