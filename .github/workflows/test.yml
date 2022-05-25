@@ -10,7 +10,7 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  check:
+  foundry:
     strategy:
       fail-fast: true
 
@@ -37,6 +37,9 @@ jobs:
           forge test -vvv
         id: forge-test
 
+  hardhat:
+    strategy:
+      fail-fast: true
 
     name: Hardhat project
     runs-on: ubuntu-latest
