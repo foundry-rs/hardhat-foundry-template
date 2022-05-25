@@ -2,6 +2,8 @@
 
 **Template repository for getting started quickly with Hardhat and Foundry in one project**
 
+![Github Actions](https://github.com/devanonon/hardhat-foundry-template/workflows/CI/badge.svg)
+
 ### Getting Started
 
  * Use Foundry: 
