@@ -27,9 +27,10 @@ const config: HardhatUserConfig = {
     },
   },
   paths: {
-    sources: "./src",
-    cache: "./cache_hardhat",
+    sources: "./src", // Use ./src rather than ./contracts as Hardhat expects
+    cache: "./cache_hardhat", // Use a different cache for Hardhat than Foundry
   },
+  // This fully resolves paths for imports in the ./lib directory for Hardhat
   preprocess: {
     eachLine: (hre) => ({
       transform: (line: string) => {
