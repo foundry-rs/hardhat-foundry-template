@@ -7,11 +7,15 @@
     "test": "test"
   },
   "scripts": {
-    "test": "hardhat test"
+    "install": "forge install",
+    "test": "yarn run hre:test && yarn run forge:test",
+    "hre:test": "hardhat test",
+    "forge:test": "forge test"
   },
   "author": "Devan Non <devanon@chainstride.capital>",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@foundry-rs/hardhat-anvil": "^0.1.4",
     "@nomiclabs/hardhat-ethers": "^2.0.6",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@typechain/ethers-v5": "^10.0.0",
