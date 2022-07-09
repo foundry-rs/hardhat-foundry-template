@@ -1,18 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.13;
 
-import {CREATE3} from "solmate/utils/CREATE3.sol";
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../ERC20/Creds.sol";
 import "../ERC20/Credit.sol";
 import "../ERC20/TokenManager.sol";
 
-contract CreditFactory {
-    //using CREATE3 for ??;
-    //using Clones for ??;
+contract CreditFactory is Ownable {
+    error AlreadyRegistered();
+    error NotRegistered();
+    error CredsDeploymentFailed();
+    error CreditDeploymentFailed();
+    error TokenManagerDeploymentFailed();
 
-    //ignore tokens transferred to this contract accept to transfer them to the treasury
+    //events:
+    //registerCredit
+    //run
+    //createCreds
+    //createCredit
+    //createTokenManager
 
     struct CREDIT {
         address TokenManager;
@@ -20,45 +27,79 @@ contract CreditFactory {
         address Credit;
     }
 
-    address payable private treasury;
-    uint256 public globalCeiling; // set default global ceiling for a given CREDIT
-    //address public tokenAddress;
-
-    //how to register a token for credit?
-    //function registerCredit() public {}
-
     mapping(address => CREDIT) public CreditMapping;
+    address[] public registeredAddresses;
+    address private TokenAddress; //prevents stack too deep errors
 
-    //how to generate salt?
+    string private constant CREDSPOOLNAME = " Creds";
+    string private constant CREDSPOOLSYMBOL = "c";
+    string private constant CREDITPOOLNAME = " Credit";
+    string private constant CREDITPOOLSYMBOL = "C";
 
-    function createCreds(
-        string memory credsName,
-        string memory credsSymbol,
-        uint8 credsDecimal,
-        bytes32 salt,
-        address tokenAddress
-    ) internal returns (address) {
-        Creds creds = new Creds{salt: salt}(
-            credsName,
-            credsSymbol,
-            credsDecimal
-        );
-        address local = address(creds);
-        CreditMapping[tokenAddress].Creds = local;
-        return local;
+    // refactor
+    function getTokenNameSymbolDecimal(address tokenAddress)
+        public
+        view
+        returns (
+            string memory,
+            string memory,
+            uint8,
+            string memory,
+            string memory
+        )
+    {
+        string memory tokenName = ERC20(tokenAddress).name();
+        string memory tokenSymbol = ERC20(tokenAddress).symbol();
+        string memory credsName = join(tokenName, CREDSPOOLNAME);
+        string memory credsSymbol = join(tokenSymbol, CREDSPOOLSYMBOL);
+        uint8 credsDecimal = ERC20(tokenAddress).decimals();
+
+        string memory creditName = join(tokenName, CREDITPOOLNAME);
+        string memory creditSymbol = join(tokenSymbol, CREDITPOOLSYMBOL);
+        return (credsName, credsSymbol, credsDecimal, creditName, creditSymbol);
     }
 
-    function createCredit(
-        string memory creditName,
-        string memory creditSymbol,
-        bytes32 salt,
-        address tokenAddress
-    ) internal returns (address) {
-        Credit credit = new Credit{salt: salt}(creditName, creditSymbol);
+    function registerCredit(address tokenAddress)
+        external
+        returns (
+            address,
+            address,
+            address
+        )
+    {
+        TokenAddress = tokenAddress;
+        if (CreditMapping[TokenAddress].TokenManager != address(0))
+            revert AlreadyRegistered();
 
-        address local = address(credit);
-        CreditMapping[tokenAddress].Credit = local;
-        return local;
+        //uint8 credsDecimal = ERC20(tokenAddress).decimals();
+        (
+            string memory credsName,
+            string memory credsSymbol,
+            uint8 credsDecimal,
+            string memory creditName,
+            string memory creditSymbol
+        ) = getTokenNameSymbolDecimal(TokenAddress);
+
+        (address creds, address credit, address tokenManager) = run(
+            credsName,
+            credsSymbol,
+            credsDecimal,
+            creditName,
+            creditSymbol,
+            TokenAddress
+        );
+
+        // (address creds, address credit, address tokenManager) = run(
+        //     CREDSPOOLNAME,
+        //     CREDSPOOLSYMBOL,
+        //     credsDecimal,
+        //     CREDITPOOLNAME,
+        //     CREDITPOOLSYMBOL,
+        //     tokenAddress
+        // );
+
+        //emit
+        return (creds, credit, tokenManager);
     }
 
     function run(
@@ -67,47 +108,106 @@ contract CreditFactory {
         uint8 credsDecimal,
         string memory creditName,
         string memory creditSymbol,
-        bytes32 salt,
         address tokenAddress
-    ) external {
+    )
+        private
+        returns (
+            address,
+            address,
+            address
+        )
+    {
         address creds = createCreds(
             credsName,
             credsSymbol,
             credsDecimal,
-            salt,
             tokenAddress
         );
-        address credit = createCredit(
-            creditName,
-            creditSymbol,
-            salt,
-            tokenAddress
-        );
-        createTokenManager(
+        address credit = createCredit(creditName, creditSymbol, tokenAddress);
+
+        address tokenManager = createTokenManager(
             ICREDS(creds),
             ICREDIT(credit),
-            treasury,
-            tokenAddress,
-            globalCeiling,
-            salt
+            tokenAddress
         );
+
+        //check to make sure it transferred properly?
+        ICREDS(creds).transferOwnership(tokenManager);
+        ICREDIT(credit).transferOwnership(tokenManager);
+        //emit
+        return (creds, credit, tokenManager);
+    }
+
+    function createCreds(
+        string memory credsName,
+        string memory credsSymbol,
+        uint8 credsDecimal,
+        address tokenAddress
+    ) private returns (address) {
+        address local = address(
+            new Creds(credsName, credsSymbol, credsDecimal)
+        );
+        if (local == address(0)) revert CredsDeploymentFailed();
+        CreditMapping[tokenAddress].Creds = local;
+        //emit
+        return local;
+    }
+
+    function createCredit(
+        string memory creditName,
+        string memory creditSymbol,
+        address tokenAddress
+    ) private returns (address) {
+        address local = address(new Credit(creditName, creditSymbol));
+        if (local == address(0)) revert CreditDeploymentFailed();
+        CreditMapping[tokenAddress].Credit = local;
+        //emit
+        return local;
     }
 
     function createTokenManager(
         ICREDS _creds,
         ICREDIT _credit,
-        address payable _treasury,
-        address _tokenAddress,
-        uint256 _globalCeiling,
-        bytes32 _salt
-    ) internal {
-        TokenManager tokenmanager = new TokenManager{salt: _salt}(
-            _creds,
-            _credit,
-            _treasury,
-            _tokenAddress,
-            _globalCeiling
+        address _tokenAddress
+    ) private returns (address) {
+        address local = address(
+            new TokenManager(_creds, _credit, _tokenAddress)
         );
-        CreditMapping[_tokenAddress].TokenManager = address(tokenmanager);
+        if (local == address(0)) revert TokenManagerDeploymentFailed();
+        CreditMapping[_tokenAddress].TokenManager = local;
+        //emit
+        return local;
     }
+
+    function join(string memory a, string memory b)
+        private
+        pure
+        returns (string memory)
+    {
+        return string(abi.encodePacked(a, b));
+    }
+
+    function getCreditMapping(address tokenAddress)
+        external
+        view
+        returns (
+            address,
+            address,
+            address
+        )
+    {
+        if (CreditMapping[tokenAddress].TokenManager == address(0))
+            revert NotRegistered();
+        address a = CreditMapping[tokenAddress].TokenManager;
+        address b = CreditMapping[tokenAddress].Creds;
+        address c = CreditMapping[tokenAddress].Credit;
+
+        return (a, b, c);
+    }
+
+    function getAllRegisteredAddresses(address[] memory poolAddresses)
+        external
+        view
+        returns (address[] memory)
+    {}
 }
