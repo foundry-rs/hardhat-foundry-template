@@ -12,10 +12,14 @@ error AmountExceedsDepositValue();
 contract ETHCredit is ERC721("Ethereum CREDIT", "eCREDIT"), Ownable {
     uint256 private _tokenId;
 
-    //NFTID => value stored in NFT
-    mapping(uint256 => uint256) public depositValue;
+    struct CreditValue {
+        uint256 depositValue;
+        uint256 creationTime;
+    }
 
-    event AddValue(address indexed customer, uint256 tokenId, uint256 amount);
+    //NFTID => value stored in NFT
+    mapping(uint256 => CreditValue) public creditValue;
+
     event SubtractValue(
         address indexed customer,
         uint256 tokenId,
@@ -25,12 +29,13 @@ contract ETHCredit is ERC721("Ethereum CREDIT", "eCREDIT"), Ownable {
 
     //core
     function createCREDIT(address customer, uint256 amount) public onlyOwner {
-        uint256 tokenId = ++_tokenId;
-        depositValue[tokenId] = amount;
-        _safeMint(customer, tokenId);
+        creditValue[_tokenId].depositValue = amount;
+        creditValue[_tokenId].creationTime = block.number;
+        _mint(customer, _tokenId);
+        unchecked {
+            ++_tokenId;
+        }
     }
-
-    //create an add function here
 
     /*customer cannot withdraw more than depositValue
     because it will throw Arithmetic over/underflow error
@@ -42,7 +47,7 @@ contract ETHCredit is ERC721("Ethereum CREDIT", "eCREDIT"), Ownable {
     ) public onlyOwner {
         address currentHolder = ERC721.ownerOf(tokenId);
         if (currentHolder != customer) revert NotCurrentHolder();
-        depositValue[tokenId] -= amount;
+        creditValue[_tokenId].depositValue -= amount;
         emit SubtractValue(customer, tokenId, amount);
     }
 
@@ -53,12 +58,18 @@ contract ETHCredit is ERC721("Ethereum CREDIT", "eCREDIT"), Ownable {
     {
         address currentHolder = ERC721.ownerOf(tokenId);
         if (currentHolder != customer) revert NotCurrentHolder();
-        value = depositValue[tokenId];
-        delete depositValue[tokenId];
+        value = balanceOfCredit(tokenId);
+        delete creditValue[tokenId];
         _burn(tokenId);
         emit Deleted(customer, tokenId, value);
         return value;
     }
 
-    //create helper function to retrieve CREDIT ID & depositValue
+    function balanceOfCredit(uint256 tokenId) public view returns (uint256) {
+        return creditValue[tokenId].depositValue;
+    }
+
+    function timeOfCredit(uint256 tokenId) public view returns (uint256) {
+        return creditValue[tokenId].creationTime;
+    }
 }
