@@ -3,6 +3,8 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-preprocessor";
 import { HardhatUserConfig, task } from "hardhat/config";
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 import example from "./tasks/example";
 
@@ -24,6 +26,12 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
+    },
+  },
+  networks: {
+    goerli: {
+      url: process.env.STAGING_ALCHEMY_KEY,
+      accounts: [process.env.PRIVATE_KEY as string]
     },
   },
   paths: {

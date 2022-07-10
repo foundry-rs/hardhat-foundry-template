@@ -7,16 +7,19 @@ const main = async () => {
 
   const creditContractFactory = await hre.ethers.getContractFactory("ETHCredit");
   const creditContract = await creditContractFactory.deploy();
+  await creditContract.deployed();
 
   console.log("credsContractFactory address: ", creditContract.address);
 
   const credsContractFactory = await hre.ethers.getContractFactory("ECreds");
   const credsContract = await credsContractFactory.deploy();
+  await credsContract.deployed();
 
   console.log("credsContractFactory address: ", credsContract.address);
 
   const tokenManagerContractFactory = await hre.ethers.getContractFactory("TokenManagerETH");
   const tokenManagerContract = await tokenManagerContractFactory.deploy(credsContract.address, creditContract.address);
+  await tokenManagerContract.deployed();
 
   console.log("TokenManager address: ", tokenManagerContract.address);
 }
