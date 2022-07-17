@@ -62,7 +62,7 @@ contract TokenManagerETH is ReentrancyGuard {
     }
 
     receive() external payable {
-        //put emit here to track this
+        //put emit here to track this.
         this.deposit();
     }
 }
