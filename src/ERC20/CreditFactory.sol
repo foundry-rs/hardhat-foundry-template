@@ -32,9 +32,9 @@ contract CreditFactory is Ownable {
     address private TokenAddress; //prevents stack too deep errors
 
     string private constant CREDSPOOLNAME = " Creds";
-    string private constant CREDSPOOLSYMBOL = "c";
+    string private constant CREDSPOOLSYMBOL = "w";
     string private constant CREDITPOOLNAME = " Credit";
-    string private constant CREDITPOOLSYMBOL = "C";
+    string private constant CREDITPOOLSYMBOL = "c";
 
     // refactor
     function getTokenNameSymbolDecimal(address tokenAddress)
@@ -51,11 +51,11 @@ contract CreditFactory is Ownable {
         string memory tokenName = ERC20(tokenAddress).name();
         string memory tokenSymbol = ERC20(tokenAddress).symbol();
         string memory credsName = join(tokenName, CREDSPOOLNAME);
-        string memory credsSymbol = join(tokenSymbol, CREDSPOOLSYMBOL);
+        string memory credsSymbol = join(CREDSPOOLSYMBOL, tokenSymbol);
         uint8 credsDecimal = ERC20(tokenAddress).decimals();
 
         string memory creditName = join(tokenName, CREDITPOOLNAME);
-        string memory creditSymbol = join(tokenSymbol, CREDITPOOLSYMBOL);
+        string memory creditSymbol = join(CREDITPOOLSYMBOL, tokenSymbol);
         return (credsName, credsSymbol, credsDecimal, creditName, creditSymbol);
     }
 
@@ -71,7 +71,6 @@ contract CreditFactory is Ownable {
         if (CreditMapping[TokenAddress].TokenManager != address(0))
             revert AlreadyRegistered();
 
-        //uint8 credsDecimal = ERC20(tokenAddress).decimals();
         (
             string memory credsName,
             string memory credsSymbol,
@@ -88,15 +87,6 @@ contract CreditFactory is Ownable {
             creditSymbol,
             TokenAddress
         );
-
-        // (address creds, address credit, address tokenManager) = run(
-        //     CREDSPOOLNAME,
-        //     CREDSPOOLSYMBOL,
-        //     credsDecimal,
-        //     CREDITPOOLNAME,
-        //     CREDITPOOLSYMBOL,
-        //     tokenAddress
-        // );
 
         //emit
         return (creds, credit, tokenManager);
@@ -117,13 +107,14 @@ contract CreditFactory is Ownable {
             address
         )
     {
+        address credit = createCredit(creditName, creditSymbol, tokenAddress);
+
         address creds = createCreds(
             credsName,
             credsSymbol,
             credsDecimal,
             tokenAddress
         );
-        address credit = createCredit(creditName, creditSymbol, tokenAddress);
 
         address tokenManager = createTokenManager(
             ICREDS(creds),
@@ -205,6 +196,7 @@ contract CreditFactory is Ownable {
         return (a, b, c);
     }
 
+    //TODO
     function getAllRegisteredAddresses(address[] memory poolAddresses)
         external
         view

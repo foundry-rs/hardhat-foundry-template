@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.13;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
-import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
+import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol"; //use oz instead
 
 import "../interfaces/ICREDS.sol";
 import "../interfaces/ICREDIT.sol";
 
-contract TokenManager is Ownable, Pausable, ReentrancyGuard {
+contract TokenManager is ReentrancyGuard {
     using SafeTransferLib for ERC20;
 
     error EmptySend();
@@ -40,12 +38,7 @@ contract TokenManager is Ownable, Pausable, ReentrancyGuard {
         tokenAddress = _tokenAddress;
     }
 
-    function deposit(uint256 amount)
-        external
-        whenNotPaused
-        nonReentrant
-        returns (uint256)
-    {
+    function deposit(uint256 amount) external nonReentrant returns (uint256) {
         if (amount == 0) revert EmptySend();
 
         address customer = msg.sender;
@@ -65,7 +58,6 @@ contract TokenManager is Ownable, Pausable, ReentrancyGuard {
     //call new function which determines which private function to call
     function decreaseCredit(uint256 tokenId, uint256 amount)
         external
-        whenNotPaused
         nonReentrant
         returns (uint256)
     {
@@ -80,7 +72,6 @@ contract TokenManager is Ownable, Pausable, ReentrancyGuard {
 
     function claimUnderlying(uint256 tokenId)
         external
-        whenNotPaused
         nonReentrant
         returns (uint256)
     {
@@ -95,13 +86,5 @@ contract TokenManager is Ownable, Pausable, ReentrancyGuard {
 
     function getTotalBalance() external view returns (uint256) {
         return globalDepositValue;
-    }
-
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    function unpause() external onlyOwner {
-        _unpause();
     }
 }

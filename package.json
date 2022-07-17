@@ -30,6 +30,9 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.0",
-    "dotenv": "^16.0.1"
+    "dotenv": "^16.0.1",
+    "prettier": "^2.5.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint": "^3.3.6"
   }
 }

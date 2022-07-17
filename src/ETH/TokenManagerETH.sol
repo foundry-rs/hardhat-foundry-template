@@ -2,15 +2,13 @@
 pragma solidity >=0.8.13;
 
 import {SafeTransferLib} from "solmate/utils/SafeTransferLib.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../interfaces/ICREDS.sol";
 import "../interfaces/ICREDIT.sol";
 
 error EmptySend();
 
-contract TokenManagerETH is Ownable, Pausable, ReentrancyGuard {
+contract TokenManagerETH is ReentrancyGuard {
     using SafeTransferLib for address;
 
     ICREDS public creds;
@@ -31,7 +29,7 @@ contract TokenManagerETH is Ownable, Pausable, ReentrancyGuard {
         credit = _credit;
     }
 
-    function deposit() public payable whenNotPaused nonReentrant {
+    function deposit() external payable nonReentrant {
         if (msg.value == 0) revert EmptySend();
 
         address customer = msg.sender;
@@ -43,8 +41,7 @@ contract TokenManagerETH is Ownable, Pausable, ReentrancyGuard {
     }
 
     function partialWithdraw(uint256 tokenId, uint256 amount)
-        public
-        whenNotPaused
+        external
         nonReentrant
     {
         address customer = msg.sender;
@@ -55,11 +52,7 @@ contract TokenManagerETH is Ownable, Pausable, ReentrancyGuard {
         emit SubtractFromCredit(customer, tokenId, amount);
     }
 
-    function claimAllUnderlying(uint256 tokenId)
-        public
-        whenNotPaused
-        nonReentrant
-    {
+    function claimAllUnderlying(uint256 tokenId) external nonReentrant {
         address customer = msg.sender;
         uint256 amount = credit.deleteCREDIT(customer, tokenId);
         globalDepositValue -= amount;
@@ -70,14 +63,6 @@ contract TokenManagerETH is Ownable, Pausable, ReentrancyGuard {
 
     receive() external payable {
         //put emit here to track this
-        deposit();
-    }
-
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
+        this.deposit();
     }
 }
