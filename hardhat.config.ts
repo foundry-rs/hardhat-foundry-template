@@ -30,9 +30,13 @@ const config: HardhatUserConfig = {
   },
   networks: {
     goerli: {
-      url: process.env.STAGING_ALCHEMY_KEY,
+      url: process.env.GOERLI_STAGING_ALCHEMY_KEY,
       accounts: [process.env.PRIVATE_KEY as string]
     },
+    rinkeby: {
+      url: process.env.RINKEBY_STAGING_ALCHEMY_KEY,
+      accounts: [process.env.PRIVATE_KEY as string] 
+    }
   },
   paths: {
     sources: "./src", // Use ./src rather than ./contracts as Hardhat expects

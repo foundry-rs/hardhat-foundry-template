@@ -9,7 +9,7 @@ const main = async () => {
   const creditContract = await creditContractFactory.deploy();
   await creditContract.deployed();
 
-  console.log("credsContractFactory address: ", creditContract.address);
+  console.log("creditContractFactory address: ", creditContract.address);
 
   const credsContractFactory = await hre.ethers.getContractFactory("ECreds");
   const credsContract = await credsContractFactory.deploy();
